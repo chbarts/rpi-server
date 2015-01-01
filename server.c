@@ -12,14 +12,15 @@
 
 #define GROUP "224.0.0.3"
 #define BPORT 2015
-#define KEY   0xdeadbeef
 #define MOD   65521
+
+static uint8_t key[] = { 0xde, 0xad, 0xbe, 0xef };
 
 static uint32_t adler32(uint32_t data)
 {
-    uint8_t *dp, buf[sizeof(data) + sizeof(KEY)];
+    uint8_t *dp, buf[sizeof(data) + sizeof(key)];
     uint32_t a = 1, b = 0;
-    int i, len = sizeof(data) + sizeof(KEY);
+    int i, len = sizeof(data) + sizeof(key);
 
     dp = (uint8_t *) & data;
 
@@ -27,10 +28,9 @@ static uint32_t adler32(uint32_t data)
         buf[i] = dp[i];
     }
 
-    buf[i++] = 0xde;
-    buf[i++] = 0xad;
-    buf[i++] = 0xbe;
-    buf[i++] = 0xef;
+    for (i = 0; i < sizeof(key); i++) {
+        buf[sizeof(data) + i] = key[i];
+    }
 
     for (i = 0; i < len; i++) {
         a = (a + buf[i]) % MOD;
