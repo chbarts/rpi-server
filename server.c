@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <strings.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -54,7 +55,7 @@ static void broadcaster(void)
         exit(EXIT_FAILURE);
     }
 
-    bzero((char *) &addr, sizeof(addr));
+    bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(BPORT);
     addr.sin_addr.s_addr = inet_addr(GROUP);
@@ -124,4 +125,82 @@ static void child(int cfd, struct sockaddr *sa)
     }
 
     system(buf);
+}
+
+#define SPORT 1984
+
+int main(void)
+{
+    struct sockaddr_in sa;
+    int sfd, cfd, i;
+    socklen_t addrlen;
+    pid_t bpid, cpid;
+
+    if ((sfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    addrlen = sizeof(sa);
+    bzero(&sa, addrlen);
+    sa.sin_family = PF_INET;
+    sa.sin_port = htons(SPORT);
+    sa.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sfd, (const void *) &sa, sizeof(sa)) == -1) {
+        perror("bind() failed");
+        close(sfd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(sfd, 50) == -1) {
+        perror("listen() failed");
+        close(sfd);
+        exit(EXIT_FAILURE);
+    }
+
+    switch (bpid = fork()) {
+    case 0:
+        broadcaster();
+        break;
+    case -1:
+        perror("fork() failed");
+        close(sfd);
+        exit(EXIT_FAILURE);
+        break;
+    default:
+        break;
+    }
+
+    while (1) {
+        if ((cfd = accept(sfd, (struct sockaddr *) &sa, &addrlen)) == -1) {
+            perror("accept() failed");
+            close(sfd);
+            kill(bpid, SIGKILL);
+            waitpid(bpid, &i, 0);
+            exit(EXIT_FAILURE);
+        }
+
+        switch (cpid = fork()) {
+        case 0:
+            child(cfd, (struct sockaddr *) &sa);
+            break;
+        case -1:
+            perror("fork() failed");
+            close(sfd);
+            shutdown(cfd, SHUT_RDWR);
+            close(cfd);
+            kill(bpid, SIGKILL);
+            waitpid(bpid, &i, 0);
+            exit(EXIT_FAILURE);
+            break;
+        default:
+            kill(bpid, SIGKILL);
+            waitpid(bpid, &i, 0);
+            waitpid(cpid, &i, 0);
+            break;
+        }
+    }
+
+    return 0;
 }
