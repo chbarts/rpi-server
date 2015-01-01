@@ -21,7 +21,7 @@ static uint32_t adler32(uint32_t data)
     uint32_t a = 1, b = 0;
     int i, len = sizeof(data) + sizeof(KEY);
 
-    dp = (uint32_t *) & data;
+    dp = (uint8_t *) & data;
 
     for (i = 0; i < sizeof(data); i++) {
         buf[i] = dp[i];
