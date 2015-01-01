@@ -159,20 +159,20 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    switch (bpid = fork()) {
-    case 0:
-        broadcaster();
-        break;
-    case -1:
-        perror("fork() failed");
-        close(sfd);
-        exit(EXIT_FAILURE);
-        break;
-    default:
-        break;
-    }
-
     while (1) {
+        switch (bpid = fork()) {
+        case 0:
+            broadcaster();
+            break;
+        case -1:
+            perror("fork() failed");
+            close(sfd);
+            exit(EXIT_FAILURE);
+            break;
+        default:
+            break;
+        }
+
         if ((cfd = accept(sfd, (struct sockaddr *) &sa, &addrlen)) == -1) {
             perror("accept() failed");
             close(sfd);
