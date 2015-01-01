@@ -1,3 +1,4 @@
+#include <linux/limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -83,4 +84,44 @@ static void broadcaster(void)
 
         sleep(1);
     }
+}
+
+#define CMD "omxplayer -o hdmi rtmp://%s:1935/vod/%s"
+#define CMD2 "omxplayer -o hdmi rtmp://[%s]:1935/vod/%s"
+#define BUF_LEN (sizeof(CMD2) + INET6_ADDRSTRLEN + PATH_MAX)
+
+static void get_ip_str(const struct sockaddr *sa, char *addr)
+{
+    switch (sa->sa_family) {
+    case AF_INET:
+        inet_ntop(AF_INET, &(((struct sockaddr_in *) sa)->sin_addr), addr,
+                  INET6_ADDRSTRLEN);
+        break;
+    case AF_INET6:
+        inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr),
+                  addr, INET6_ADDRSTRLEN);
+        break;
+    }
+}
+
+static void child(int cfd, struct sockaddr *sa)
+{
+    char buf[BUF_LEN], addr[INET6_ADDRSTRLEN], file[PATH_MAX];
+    ssize_t len, totlen = 0;
+
+    while ((len = read(cfd, file + totlen, PATH_MAX - totlen)) > 0) {
+        totlen += len;
+    }
+
+    shutdown(cfd, SHUT_RDWR);
+    close(cfd);
+    file[totlen] = '\0';
+    get_ip_str(sa, addr);
+    if (sa->sa_family == AF_INET) {
+        snprintf(buf, BUF_LEN, CMD, addr, file);
+    } else {
+        snprintf(buf, BUF_LEN, CMD2, addr, file);
+    }
+
+    system(buf);
 }
