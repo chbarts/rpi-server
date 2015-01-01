@@ -127,6 +127,7 @@ static void child(int cfd, struct sockaddr *sa)
     }
 
     system(buf);
+    exit(EXIT_SUCCESS);
 }
 
 #define SPORT 1984
