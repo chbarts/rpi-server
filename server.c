@@ -1,3 +1,5 @@
+/* Server code to run on the Raspberry Pi */
+
 #include <linux/limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
