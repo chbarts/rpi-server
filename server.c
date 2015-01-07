@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <strings.h>
+#include <string.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -57,7 +57,7 @@ static void broadcaster(void)
         exit(EXIT_FAILURE);
     }
 
-    bzero(&addr, sizeof(addr));
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(BPORT);
     addr.sin_addr.s_addr = inet_addr(GROUP);
@@ -150,7 +150,7 @@ int main(void)
     }
 
     addrlen = sizeof(sa);
-    bzero(&sa, addrlen);
+    memset(&sa, 0, addrlen);
     sa.sin_family = PF_INET;
     sa.sin_port = htons(SPORT);
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
