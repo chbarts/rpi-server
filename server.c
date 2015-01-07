@@ -89,8 +89,13 @@ static void broadcaster(void)
     }
 }
 
+#ifndef DEBUG
 #define CMD "omxplayer -o hdmi rtmp://%s:1935/vod/%s"
 #define CMD2 "omxplayer -o hdmi rtmp://[%s]:1935/vod/%s"
+#else
+#define CMD "echo omxplayer -o hdmi rtmp://%s:1935/vod/%s"
+#define CMD2 "echo omxplayer -o hdmi rtmp://[%s]:1935/vod/%s"
+#endif
 #define BUF_LEN (sizeof(CMD2) + INET6_ADDRSTRLEN + PATH_MAX)
 
 static void get_ip_str(const struct sockaddr *sa, char *addr)
