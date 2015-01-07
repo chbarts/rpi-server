@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
     if (recvfrom
         (sock, message, sizeof(message), 0, (struct sockaddr *) &addr,
-         &addrlen) < 0) {
+         &addrlen) != (sizeof(data) + sizeof(crc))) {
         perror("recvfrom() failed");
         close(sock);
         exit(EXIT_FAILURE);
@@ -102,6 +102,28 @@ int main(int argc, char *argv[])
                 htonl(adler32(data)), data, crc);
         exit(EXIT_FAILURE);
     }
+
+    addr.sin_port = htons(SPORT);
+
+    if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket() (TCP) failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (connect(sock, (struct sockaddr *) &addr, addrlen) < 0) {
+        perror("connect() failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    if (write(sock, argv[1], strlen(argv[1])) != strlen(argv[1])) {
+        perror("write() failed");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
+
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
 
     return 0;
 }
