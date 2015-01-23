@@ -90,11 +90,11 @@ static void broadcaster(void)
 }
 
 #ifndef DEBUG
-#define CMD "omxplayer -o hdmi rtmp://%s:1935/vod/%s"
-#define CMD2 "omxplayer -o hdmi rtmp://[%s]:1935/vod/%s"
+#define CMD "omxplayer -o hdmi rtsp://%s:8554/%s"
+#define CMD2 "omxplayer -o hdmi rtsp://[%s]:8554/%s"
 #else
-#define CMD "echo omxplayer -o hdmi rtmp://%s:1935/vod/%s"
-#define CMD2 "echo omxplayer -o hdmi rtmp://[%s]:1935/vod/%s"
+#define CMD "echo omxplayer -o hdmi rtsp://%s:8554/%s"
+#define CMD2 "echo omxplayer -o hdmi rtsp://[%s]:8554/%s"
 #endif
 #define BUF_LEN (sizeof(CMD2) + INET6_ADDRSTRLEN + PATH_MAX)
 
