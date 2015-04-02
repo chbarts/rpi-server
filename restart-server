@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+rpi-ip > ~/rpi-ip
+ssh pi@$(cat ~/rpi-ip) pkill -f /home/pi/rpi-server/server
+ssh pi@$(cat ~/rpi-ip) /home/pi/rpi-server/server
