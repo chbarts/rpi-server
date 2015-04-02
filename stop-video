@@ -1,0 +1,2 @@
+#!/usr/bin/env zsh
+echo -n 'q' | nc $(cat ~/rpi-ip) 2025

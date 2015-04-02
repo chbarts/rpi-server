@@ -1,0 +1,2 @@
+#!/usr/bin/env zsh
+echo -n ' ' | nc $(cat ~/rpi-ip) 2025
