@@ -44,13 +44,15 @@ static uint32_t adler32(uint32_t data)
     return (b << 16) | a;
 }
 
+static int sock = 0;
+
 static void broadcaster(void)
 {
     struct sockaddr_in addr;
     uint32_t data, crc;
     char message[sizeof(data) + sizeof(crc)];
     time_t mtime;
-    int i, sock;
+    int i;
 
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("broadcaster couldn't make socket");
@@ -137,12 +139,68 @@ static void child(int cfd, struct sockaddr *sa)
 
 #define SPORT 1984
 
+static pid_t bpid = 0, cpid = 0;
+static int sfd = 0, cfd = 0;
+
+static void handler(int sig)
+{
+    int i;
+
+    if (sfd && cpid) {
+        close(sfd);
+    }
+
+    if (cfd && !cpid) {
+        shutdown(cfd, SHUT_RDWR);
+        close(cfd);
+    }
+
+    if (sock && !bpid) {
+        close(sock);
+    }
+
+    if (bpid && cpid) {
+        waitpid(bpid, &i, 0);
+        bpid = 0;
+        waitpid(cpid, &i, 0);
+        cpid = 0;
+    }
+
+    if (cpid) {
+        waitpid(cpid, &i, 0);
+    }
+
+    if (!sock && bpid) {
+        waitpid(bpid, &i, 0);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
+static int sig_handle(int sig, void (*hndlr) (int))
+{
+    struct sigaction act;
+
+    act.sa_handler = hndlr;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    if (sigaction(sig, &act, NULL) == -1) {
+        return -1;
+    }
+
+    return 0;
+}
+
 int main(void)
 {
     struct sockaddr_in sa;
-    int sfd, cfd, i;
+    int i;
     socklen_t addrlen;
-    pid_t bpid, cpid;
+
+    if (sig_handle(SIGTERM, handler) == -1) {
+        perror("sigaction() SIGTERM");
+        exit(EXIT_FAILURE);
+    }
 
     if ((sfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket() failed");
@@ -205,9 +263,12 @@ int main(void)
         default:
             kill(bpid, SIGKILL);
             waitpid(bpid, &i, 0);
+            bpid = 0;
             waitpid(cpid, &i, 0);
             break;
         }
+
+        cpid = 0;
     }
 
     return 0;
